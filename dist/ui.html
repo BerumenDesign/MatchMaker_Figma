@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MatchMaker</title>
+<style>:root {
+  --bg: var(--figma-color-bg, #fff);
+  --bg2: var(--figma-color-bg-secondary, #f5f5f5);
+  --bg-hover: var(--figma-color-bg-hover, #f0f0f0);
+  --text: var(--figma-color-text, #1e1e1e);
+  --text2: var(--figma-color-text-secondary, #6b6b6b);
+  --text3: var(--figma-color-text-tertiary, #9a9a9a);
+  --border: var(--figma-color-border, #e6e6e6);
+  --brand: var(--figma-color-bg-brand, #0d99ff);
+  --on-brand: var(--figma-color-text-onbrand, #fff);
+  --warn-bg: var(--figma-color-bg-warning-tertiary, #fff4d6);
+  --warn: var(--figma-color-text-warning, #8a5b00);
+  --ok: var(--figma-color-text-success, #14ae5c);
+  --danger: var(--figma-color-text-danger, #e03e1a);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font: 11px/16px Inter, system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+#app { display: flex; flex-direction: column; height: 100%; }
+button { font: inherit; cursor: pointer; border-radius: 5px; border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: 4px 10px; height: 26px; }
+button:hover:not(:disabled) { background: var(--bg-hover); }
+button.primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); font-weight: 600; }
+button.primary:hover:not(:disabled) { filter: brightness(0.95); background: var(--brand); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.link { border: none; background: none; color: var(--brand); padding: 0 4px; height: auto; }
+select { font: inherit; width: 100%; height: 28px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text); padding: 0 6px; }
+label { display: flex; align-items: center; gap: 6px; }
+.header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.steps { display: flex; gap: 4px; margin-left: auto; }
+.step { padding: 1px 8px; border-radius: 10px; color: var(--text3); background: var(--bg2); }
+.step.on { color: var(--on-brand); background: var(--brand); }
+.title { font-weight: 700; font-size: 12px; }
+.body { flex: 1; overflow: auto; padding: 12px; }
+.footer { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.footer .spacer { flex: 1; }
+.field { margin-bottom: 14px; }
+.field > .label { font-weight: 600; margin-bottom: 6px; display: block; }
+.muted { color: var(--text2); }
+.small { font-size: 10px; color: var(--text3); }
+.note { background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
+.note b { display: block; margin-bottom: 2px; }
+.error { background: #fde8e4; color: var(--danger); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+.stats { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--text2); margin-bottom: 10px; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin: 0 -12px 8px; padding: 0 12px; position: sticky; top: -12px; background: var(--bg); z-index: 2; }
+.tab { border: none; border-bottom: 2px solid transparent; border-radius: 0; height: 30px; color: var(--text2); background: none; padding: 0 8px; }
+.tab.on { color: var(--text); border-bottom-color: var(--brand); font-weight: 600; }
+.count { display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px; background: var(--bg2); color: var(--text2); margin-left: 4px; text-align: center; }
+.group { border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.group.approved { border-color: var(--brand); }
+.ghead { display: flex; align-items: center; gap: 8px; }
+.ghead .hex { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+.ghead .meta { flex: 1; min-width: 0; }
+.badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.badge { border-radius: 4px; padding: 0 5px; background: var(--bg2); color: var(--text2); font-size: 10px; }
+.badge.fill { background: #e5f4ff; color: #0768b0; }
+.badge.text { background: #f1e8ff; color: #6b2fbf; }
+.badge.stroke { background: #e8f8ee; color: #0f7a40; }
+.badge.mode { background: #2c2c2c; color: #fff; }
+.swatch { width: 28px; height: 28px; border-radius: 6px; flex: none; position: relative; overflow: hidden; border: 1px solid var(--border);
+  background-color: #fff; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px; background-position: 0 0, 0 4px, 4px -4px, -4px 0; }
+.swatch > span { position: absolute; inset: 0; }
+.swatch.sm { width: 14px; height: 14px; border-radius: 3px; }
+.cands { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.cand { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 5px; cursor: pointer; }
+.cand:hover { background: var(--bg-hover); }
+.cand.on { background: var(--bg2); }
+.cand .name { font-weight: 500; }
+.cand .grp { color: var(--text3); margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+.empty { color: var(--text2); text-align: center; padding: 30px 10px; }
+.report { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+.report .nums { display: flex; gap: 12px; font-weight: 600; }
+.ok { color: var(--ok); } .skip { color: var(--warn); } .fail { color: var(--danger); }
+.report ul { margin: 6px 0 0; padding-left: 16px; max-height: 140px; overflow: auto; }
+.busy { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 80%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 10; }
+.bar { width: 60%; height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--brand); transition: width .15s; }
+.bar.indet > span { width: 30% !important; animation: slide 1s infinite linear; }
+@keyframes slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+.opt { margin: 6px 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>"use strict";
+(() => {
+  // src/shared/color.ts
+  var clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+  var to8 = (x) => Math.round(clamp01(x) * 255);
+  function parseKey(key) {
+    const n = (i) => parseInt(key.slice(i, i + 2), 16) / 255;
+    return { r: n(1), g: n(3), b: n(5), a: key.length >= 9 ? n(7) : 1 };
+  }
+  function keyLabel(key) {
+    const hex = key.slice(0, 7);
+    const a = key.length >= 9 ? parseInt(key.slice(7, 9), 16) : 255;
+    return a === 255 ? hex : `${hex} \xB7 ${Math.round(a / 255 * 100)}%`;
+  }
+  function cssRgba(key) {
+    const c = parseKey(key);
+    return `rgba(${to8(c.r)}, ${to8(c.g)}, ${to8(c.b)}, ${+c.a.toFixed(3)})`;
+  }
+  function stackLayers(sig) {
+    if (!sig) return [];
+    return sig.split("|").map((part) => {
+      const [, key, , vis] = part.split(":");
+      return { key, hidden: vis === "hidden" };
+    });
+  }
+
+  // src/ui/ui.ts
+  var send = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
+  var state = {
+    view: "source",
+    sources: [],
+    sourceId: "",
+    includeHidden: false,
+    respectScopes: true,
+    selectionCount: 0,
+    groups: [],
+    stats: null,
+    sourceLabel: "",
+    choice: {},
+    approved: {},
+    tab: "choose",
+    report: null,
+    showReportDetails: false,
+    located: {},
+    busy: null,
+    error: ""
+  };
+  var locateIndex = {};
+  var esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  var app = document.getElementById("app");
+  var currentSource = () => state.sources.find((s) => s.id === state.sourceId);
+  function swatch(g, small = false) {
+    const layers = g.isStack ? stackLayers(g.colorKey).filter((l) => !l.hidden) : [{ key: g.colorKey, hidden: false }];
+    return `<div class="swatch${small ? " sm" : ""}">${layers.map((l) => `<span style="background:${cssRgba(l.key)}"></span>`).join("")}</div>`;
+  }
+  function colorLabel(g) {
+    if (!g.isStack) return keyLabel(g.colorKey);
+    const layers = stackLayers(g.colorKey);
+    return layers.length === 1 ? keyLabel(layers[0].key) : `${layers.length}-paint stack`;
+  }
+  var PROP_LABEL = { fill: "Fill", text: "Text", stroke: "Stroke" };
+  function renderHeader() {
+    const step = state.view === "source" ? 1 : state.report ? 3 : 2;
+    const s = (n, label) => `<span class="step${step === n ? " on" : ""}">${n} ${label}</span>`;
+    return `<div class="header"><span class="title">MatchMaker</span><div class="steps">${s(1, "Scan")}${s(2, "Review")}${s(3, "Apply")}</div></div>`;
+  }
+  function renderSource() {
+    const src = currentSource();
+    const groups = [
+      ["Local variable collections", state.sources.filter((s) => s.kind === "local-collection")],
+      ["Library variable collections (enabled in this file)", state.sources.filter((s) => s.kind === "library-collection")],
+      ["Color styles", state.sources.filter((s) => s.kind === "local-styles")]
+    ];
+    const options = groups.filter(([, list]) => list.length).map(([label, list]) => `<optgroup label="${esc(label)}">${list.map((s) => `<option value="${esc(s.id)}"${s.id === state.sourceId ? " selected" : ""}>${esc(s.label)} \u2014 ${esc(s.detail)}${s.kind === "library-collection" ? s.loaded ? " (loaded)" : " (not loaded)" : ""}</option>`).join("")}</optgroup>`).join("");
+    const isLib = src?.kind === "library-collection";
+    const needsLoad = isLib && !src?.loaded;
+    const libNote = isLib ? `<div class="note"><b>Library colors must be loaded before scanning</b>
+        Figma only lists names for library variables. To read their values in each mode, MatchMaker imports this collection\u2019s
+        color variables into the file. That adds references to the library\u2019s variables (including ones you may not use) and is
+        recorded as its own Undo step. No layers are changed.
+        ${src?.loaded ? "<br><br>\u2713 Loaded for this session." : ""}</div>
+       ${needsLoad ? '<button id="load-lib">Load library colors</button>' : ""}` : "";
+    const scopesNote = isLib && state.respectScopes ? '<div class="small">Library variables may report \u201CAll scopes\u201D through the Plugin API, so scope filtering may not narrow library candidates.</div>' : "";
+    const sel = state.selectionCount;
+    return `
+    <div class="body">
+      ${state.error ? `<div class="error">${esc(state.error)}</div>` : ""}
+      <div class="field">
+        <span class="label">Scope</span>
+        <div>${sel ? `<b>${sel}</b> selected layer${sel === 1 ? "" : "s"} and all descendants` : '<span class="muted">Select one or more frames on the canvas.</span>'}</div>
+      </div>
+      <div class="field">
+        <span class="label">Match against</span>
+        ${state.sources.length ? `<select id="source">${options}</select>` : '<div class="muted">No color variables, enabled library collections or local color styles found in this file.</div>'}
+        ${libNote}
+      </div>
+      <div class="field">
+        <span class="label">Options</span>
+        <label class="opt"><input type="checkbox" id="opt-scopes"${state.respectScopes ? " checked" : ""}${src?.kind === "local-styles" ? " disabled" : ""}> Respect variable scopes (text / fill / stroke)</label>
+        ${scopesNote}
+        <label class="opt"><input type="checkbox" id="opt-hidden"${state.includeHidden ? " checked" : ""}> Include hidden layers</label>
+      </div>
+      <div class="small">Finds unbound solid fills, strokes and text colors (including each color range in mixed text). Already-linked
+        properties, gradients and images are never changed. Exact matches must reproduce the color <i>and</i> transparency in each layer\u2019s active mode.</div>
+    </div>
+    <div class="footer">
+      <span class="spacer"></span>
+      <button class="primary" id="scan"${!sel || !src || needsLoad ? " disabled" : ""}>Scan</button>
+    </div>`;
+  }
+  function renderGroup(g) {
+    const chosen = state.choice[g.id];
+    const approved = !!state.approved[g.id] && !!chosen;
+    const cands = g.candidates.length ? `<div class="cands">${g.candidates.map((c) => `<label class="cand${chosen === c.id ? " on" : ""}" data-g="${g.id}" data-c="${esc(c.id)}">
+            <input type="radio" name="r-${g.id}"${chosen === c.id ? " checked" : ""}>
+            ${swatch(g, true)}<span class="name">${esc(c.name)}</span><span class="grp">${esc(c.group)}</span></label>`).join("")}</div>` : "";
+    const loc = state.located[g.id];
+    return `<div class="group${approved ? " approved" : ""}">
+    <div class="ghead">
+      ${g.candidates.length ? `<input type="checkbox" class="approve" data-g="${g.id}"${approved ? " checked" : ""}${chosen ? "" : " disabled"} title="Approve">` : ""}
+      ${swatch(g)}
+      <div class="meta">
+        <div class="hex">${esc(colorLabel(g))}</div>
+        <div class="badges">
+          <span class="badge ${g.property}">${PROP_LABEL[g.property]}</span>
+          ${g.modeLabels.map((m) => `<span class="badge mode">${esc(m)}</span>`).join("")}
+          <span class="badge" title="${esc(g.sampleNames.join(", "))}">${g.layerCount} layer${g.layerCount === 1 ? "" : "s"}${g.occurrenceCount > g.layerCount ? ` \xB7 ${g.occurrenceCount} ranges` : ""}</span>
+        </div>
+      </div>
+      <button class="locate" data-g="${g.id}" title="Select and zoom to an affected layer; click again for the next one">${loc ? esc(loc) : "Locate"}</button>
+    </div>
+    ${g.status === "choose" && !chosen ? `<div class="small" style="margin-top:6px">${g.candidates.length} tokens share this value \u2014 choose one.</div>` : ""}
+    ${cands}
+  </div>`;
+  }
+  function renderReview() {
+    const by = (s) => state.groups.filter((g) => g.status === s);
+    const tabs = [["choose", "Needs choice"], ["ready", "Ready"], ["unmatched", "Unmatched"]];
+    const list = by(state.tab);
+    const approvedGroups = state.groups.filter((g) => state.approved[g.id] && state.choice[g.id]);
+    const approvedLayers = approvedGroups.reduce((n, g) => n + g.layerCount, 0);
+    const st = state.stats;
+    const r = state.report;
+    const report = r ? `<div class="report">
+        <div class="nums"><span class="ok">${r.applied} applied</span><span class="skip">${r.skipped} skipped</span><span class="fail">${r.failed} failed</span>
+          ${r.lines.some((l) => l.outcome !== "applied") ? `<button class="link" id="toggle-details">${state.showReportDetails ? "Hide" : "Show"} details</button>` : ""}</div>
+        ${r.applied ? '<div class="small">One Undo (\u2318Z / Ctrl+Z) in Figma reverts this whole batch. The list below is a fresh rescan.</div>' : ""}
+        ${state.showReportDetails ? `<ul>${r.lines.filter((l) => l.outcome !== "applied").map((l) => `<li class="${l.outcome === "failed" ? "fail" : "skip"}">${esc(l.nodeName)} \u2192 ${esc(l.candidateName)}: ${esc(l.reason ?? l.outcome)}</li>`).join("")}</ul>` : ""}
+      </div>` : "";
+    const body = list.length ? list.map(renderGroup).join("") : `<div class="empty">${state.tab === "unmatched" ? "No unmatched colors." : state.tab === "ready" ? "No unique exact matches." : "Nothing needs a choice."}</div>`;
+    const bulk = state.tab === "ready" && list.length ? `<div style="display:flex;gap:6px;margin-bottom:8px"><button id="approve-all">Approve all ready</button><button id="clear-all">Clear</button></div>` : "";
+    const unmatchedHint = state.tab === "unmatched" && list.length ? '<div class="small" style="margin-bottom:8px">No token in this source reproduces these colors exactly in the layer\u2019s mode. They will not be changed.</div>' : "";
+    return `
+    <div class="body">
+      ${state.error ? `<div class="error">${esc(state.error)}</div>` : ""}
+      ${report}
+      <div class="small" style="margin-bottom:4px">Source: ${esc(state.sourceLabel)}</div>
+      ${st ? `<div class="stats"><span>${st.layersScanned} layers scanned</span><span>${st.hardcoded} hardcoded</span><span>${st.alreadyLinked} already linked</span>${st.skippedUnsupported ? `<span>${st.skippedUnsupported} gradient/image skipped</span>` : ""}</div>` : ""}
+      <div class="tabs">${tabs.map(([k, label]) => `<button class="tab${state.tab === k ? " on" : ""}" data-tab="${k}">${label}<span class="count">${by(k).length}</span></button>`).join("")}</div>
+      ${bulk}${unmatchedHint}
+      ${body}
+    </div>
+    <div class="footer">
+      <button id="back">Back</button>
+      <button id="rescan">Rescan</button>
+      <span class="spacer"></span>
+      <button class="primary" id="apply"${approvedGroups.length ? "" : " disabled"}>Apply ${approvedGroups.length ? `${approvedGroups.length} group${approvedGroups.length === 1 ? "" : "s"} \xB7 ${approvedLayers} layer${approvedLayers === 1 ? "" : "s"}` : ""}</button>
+    </div>`;
+  }
+  function renderBusy() {
+    const b = state.busy;
+    if (!b) return "";
+    const pct = b.total ? Math.round(b.done / b.total * 100) : 0;
+    return `<div class="busy"><div>${esc(b.label)}${b.total ? ` ${b.done}/${b.total}` : b.done ? ` \xB7 ${b.done}` : ""}\u2026</div>
+    <div class="bar${b.total ? "" : " indet"}"><span style="width:${pct}%"></span></div></div>`;
+  }
+  function render() {
+    const scrollEl = app.querySelector(".body");
+    const scroll = scrollEl ? scrollEl.scrollTop : 0;
+    app.innerHTML = renderHeader() + (state.view === "source" ? renderSource() : renderReview()) + renderBusy();
+    const nb = app.querySelector(".body");
+    if (nb) nb.scrollTop = scroll;
+  }
+  function scan() {
+    state.error = "";
+    state.busy = { label: "Scanning layers", done: 0, total: 0 };
+    render();
+    send({ type: "scan", sourceId: state.sourceId, options: { includeHidden: state.includeHidden, respectScopes: state.respectScopes } });
+  }
+  app.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t.id === "source") {
+      state.sourceId = t.value;
+      state.error = "";
+      render();
+    } else if (t.id === "opt-hidden") state.includeHidden = t.checked;
+    else if (t.id === "opt-scopes") {
+      state.respectScopes = t.checked;
+      render();
+    } else if (t.classList.contains("approve")) {
+      state.approved[t.dataset.g] = t.checked;
+      render();
+    }
+  });
+  app.addEventListener("click", (e) => {
+    const el = e.target.closest("button, .cand");
+    if (!el) return;
+    if (el.classList.contains("cand")) {
+      e.preventDefault();
+      const g = el.dataset.g;
+      state.choice[g] = el.dataset.c;
+      state.approved[g] = true;
+      render();
+      return;
+    }
+    switch (el.id) {
+      case "scan":
+      case "rescan":
+        state.report = null;
+        scan();
+        return;
+      case "load-lib":
+        state.busy = { label: "Loading library colors", done: 0, total: 0 };
+        render();
+        send({ type: "load-library", sourceId: state.sourceId });
+        return;
+      case "back":
+        state.view = "source";
+        state.report = null;
+        state.error = "";
+        render();
+        return;
+      case "approve-all":
+        state.groups.filter((g) => g.status === "ready").forEach((g) => {
+          state.approved[g.id] = true;
+        });
+        render();
+        return;
+      case "clear-all":
+        state.groups.forEach((g) => {
+          state.approved[g.id] = false;
+        });
+        render();
+        return;
+      case "toggle-details":
+        state.showReportDetails = !state.showReportDetails;
+        render();
+        return;
+      case "apply": {
+        const approvals = state.groups.filter((g) => state.approved[g.id] && state.choice[g.id]).map((g) => ({ groupId: g.id, candidateId: state.choice[g.id] }));
+        if (!approvals.length) return;
+        state.error = "";
+        state.busy = { label: "Applying", done: 0, total: 0 };
+        render();
+        send({ type: "apply", approvals });
+        return;
+      }
+    }
+    if (el.dataset.tab) {
+      state.tab = el.dataset.tab;
+      render();
+      return;
+    }
+    if (el.classList.contains("locate")) {
+      const g = el.dataset.g;
+      const i = locateIndex[g] ?? 0;
+      locateIndex[g] = i + 1;
+      send({ type: "locate", groupId: g, index: i });
+    }
+  });
+  window.onmessage = (ev) => {
+    const msg = ev.data && ev.data.pluginMessage;
+    if (!msg) return;
+    switch (msg.type) {
+      case "sources": {
+        state.sources = msg.sources;
+        state.selectionCount = msg.selectionCount;
+        if (!state.sources.some((s) => s.id === state.sourceId)) state.sourceId = state.sources[0]?.id ?? "";
+        break;
+      }
+      case "selection":
+        state.selectionCount = msg.count;
+        if (state.view !== "source") return;
+        break;
+      case "progress":
+        state.busy = { label: msg.label, done: msg.done, total: msg.total };
+        break;
+      case "library-loaded":
+        state.busy = null;
+        break;
+      case "scan-result": {
+        state.busy = null;
+        state.groups = msg.groups;
+        state.stats = msg.stats;
+        state.sourceLabel = msg.sourceLabel;
+        state.view = "review";
+        state.choice = {};
+        state.approved = {};
+        state.located = {};
+        for (const k of Object.keys(locateIndex)) delete locateIndex[k];
+        for (const g of msg.groups) if (g.status === "ready") {
+          state.choice[g.id] = g.candidates[0].id;
+          state.approved[g.id] = true;
+        }
+        if (!msg.isRescan) {
+          const groups = msg.groups;
+          const has = (s) => groups.some((g) => g.status === s);
+          state.tab = has("choose") ? "choose" : has("ready") ? "ready" : "unmatched";
+        }
+        break;
+      }
+      case "located":
+        state.located[msg.groupId] = `${msg.index + 1}/${msg.total}`;
+        break;
+      case "apply-result":
+        state.report = msg.report;
+        state.showReportDetails = msg.report.failed > 0;
+        break;
+      case "error":
+        state.busy = null;
+        state.error = msg.message;
+        break;
+    }
+    render();
+  };
+  render();
+  send({ type: "init" });
+})();
+</script>
+</body>
+</html>
