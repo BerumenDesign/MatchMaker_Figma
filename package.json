@@ -1,0 +1,20 @@
+{
+  "name": "matchmaker-figma",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Figma desktop development plugin: bulk-match hardcoded colors to design-system variables or color styles.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build:harness": "esbuild test/figma-harness.ts --bundle --format=iife --target=es2017 --minify --outfile=dist-test/harness.min.js"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.142.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
